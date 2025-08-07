@@ -7,6 +7,7 @@ import tkinter
 import tkinter.filedialog
 
 from typing import List
+from typing import Tuple
 
 def prompt_file():
     """Create a Tk file dialog and cleanup when finished"""
@@ -37,19 +38,21 @@ class PNGShape():
         self.body.position = 50, 50
         img = pygame.image.load(file).convert_alpha()
         img_mask = pygame.mask.from_surface(img)
-        img_outline = img_mask.outline()
-        self.shape = pymunk.Poly(self.body, img_outline)
-        self.shape.elasticity = 0.4
-        self.shape.density = 1
-        self.shape.friction = 1
+        img_outline = img_mask.outline(5)
+        self.shape: List [pymunk.Shape] = []
+        for i in range (len(img_outline)):
+            self.shape.append(pymunk.Segment(self.body, img_outline[i], img_outline[(i+1)%len(img_outline)], 3))
+            self.shape[i].elasticity = 0.4
+            self.shape[i].density = 1
+            self.shape[i].friction = 1
     def add_shape(self, space):
-        space.add(self.body, self.shape)
+        space.add(self.body, *self.shape)
         return self.shape
 
 def getImageOutline(file):
     img = pygame.image.load(file).convert_alpha()
     img_mask = pygame.mask.from_surface(img)
-    return img_mask.outline(5)
+    return img_mask.outline()
 
 
 def main():
@@ -107,6 +110,29 @@ def main():
                     pngShape = PNGShape(f)
                     pngShape.add_shape(space)
                     shapes.append(pngShape)
+                    # body = pymunk.Body(mass=1, moment=1000)
+                    # body.position = (100, 200)
+                    # body.apply_impulse_at_local_point((100, 0), (0, 1))
+                    # listshape: List [pymunk.Shape] = []
+                    # shapestest: List [Tuple[int, int]] = [
+                    #     (0, 0), (40, 0), (40, 40), (0, 40), (20, 20)
+                    # ]
+                    # for i in range(len(shapestest)): 
+                    #     listshape.append(pymunk.Segment(body,shapestest[i], shapestest[(i+1)%len(shapestest)], radius=5))
+                    #     listshape[i].elasticity = 1
+                    #     listshape[i].friction = 1
+
+                    # space.add(body, *listshape)
+                    
+                    
+                    
+                    # shape = pymunk.Segment(body, (-50, 0), (50, 0), radius=10)
+                    # shape.elasticity = 0.999
+                    # space.add(body, shape)
+                    # print(listshape[0].body)
+                    # s1 = pymunk.Segment(space.static_body,(60, 60), (80, 80), 5)
+
+                    
                     # img = pygame.image.load(f).convert_alpha()
                     # img_mask = pygame.mask.from_surface(img)
                     # img_outline = img_mask.outline()
