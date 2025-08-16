@@ -1,16 +1,22 @@
 import pygame
+from pymunk.autogeometry import simplify_vertexes
+import Triangulate
 
 pygame.init()
 window = pygame.display.set_mode((400, 400))
 clock = pygame.time.Clock()
 
-surface = pygame.image.load('D:\VR Download\PNG app test\\star.png')
+surface = pygame.image.load('D:\VR Download\PNG app test\\scug.png')
 mask = pygame.mask.from_surface(surface)
 outline = mask.outline(1)
+simplified_outline = simplify_vertexes(outline, 0.8)
+del simplified_outline[-1]
+print("Original:", len(outline), "vertices")
+print("Simplified:", len(simplified_outline), "vertices")
 window_center = window.get_rect().center
 rect = surface.get_rect(center = window_center)
-window_points = [(p[0] + rect.x, p[1] + rect.y) for p in outline]
-print(window_points)
+window_points = [(p[0] + rect.x, p[1] + rect.y) for p in simplified_outline]
+# print(window_points)
 
 run = True
 while run:
