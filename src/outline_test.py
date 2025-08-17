@@ -17,7 +17,7 @@ print("Simplified:", len(simplified_outline), "vertices")
 window_center = window.get_rect().center
 rect = surface.get_rect(center = window_center)
 window_points = [(p[0] + rect.x, p[1] + rect.y) for p in simplified_outline]
-# print(window_points)
+print(window_points)
 
 run = True
 while run:
