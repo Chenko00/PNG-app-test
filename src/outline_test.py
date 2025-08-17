@@ -1,12 +1,13 @@
 import pygame
 from pymunk.autogeometry import simplify_vertexes
-import Triangulate
 
 pygame.init()
 window = pygame.display.set_mode((400, 400))
 clock = pygame.time.Clock()
 
-surface = pygame.image.load('D:\VR Download\PNG app test\\scug.png')
+img = "scug.png"
+print("Image:", img)
+surface = pygame.image.load('.\\test_images\\' + img)
 mask = pygame.mask.from_surface(surface)
 outline = mask.outline(1)
 simplified_outline = simplify_vertexes(outline, 0.8)
