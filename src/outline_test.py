@@ -4,7 +4,7 @@ from pymunk.vec2d import Vec2d
 import triangulate
 
 pygame.init()
-window = pygame.display.set_mode((400, 400))
+window = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
 img = "damn.png"
@@ -34,10 +34,10 @@ while len(simplified_outline) >= 3:
     triangles.append(ear)
 print("Triangles:", len(triangles), "triangles")
 
-window_points = []
-for triangle in triangles:
-    for point in triangle:
-        window_points.append((point[0] + rect.x, point[1] + rect.y))
+# window_points = []
+# for triangle in triangles:
+#     for point in triangle:
+#         window_points.append((point[0] + rect.x, point[1] + rect.y))
 
 
 # for triangle in triangles:
