@@ -7,15 +7,15 @@ pygame.init()
 window = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
-img = "damn.png"
+img = "spike.png"
 print("Image:", img)
 surface = pygame.image.load('.\\test_images\\' + img)
 mask = pygame.mask.from_surface(surface)
 v_outline = [Vec2d(float(p[0]), float(p[1])) for p in mask.outline(1)]
 if (len(v_outline) > 1000):
-    tolerance = 0.8
+    tolerance = 0.9
 else:
-    tolerance = 0.7
+    tolerance = 0.8
 simplified_outline = simplify_vertices(v_outline, tolerance)
 del simplified_outline[-1]
 
@@ -54,7 +54,7 @@ while run:
     # window.blit(surface, rect)
     # pygame.draw.lines(window, "white", True, window_points, 1)
     i = 0
-    for tri in triangles:
+    for tri in triangle_draw:
         colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
         color = colors[i%3]
         # pygame.draw.polygon(window, color, ((tri[0]),(tri[1]), (tri[2])))

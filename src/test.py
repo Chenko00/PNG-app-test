@@ -3,11 +3,28 @@ random.seed(1)
 import pygame
 import pymunk
 import pymunk.pygame_util
+
+from pymunk.autogeometry import simplify_vertexes as simplify_vertices
+from triangulate import GetEar
+
 import tkinter
 import tkinter.filedialog
 
 from typing import List
 from typing import Tuple
+
+def convert_to_triangles(outline):
+    simplified_outline = simplify_vertices(outline, 0.8)
+    del simplified_outline[-1]
+
+    triangles = []
+    while len(simplified_outline) >= 3:
+        ear = GetEar(simplified_outline)
+        if ear == []:
+            break
+        triangles.append(ear)
+    
+    return triangles
 
 def prompt_file():
     """Create a Tk file dialog and cleanup when finished"""
@@ -17,7 +34,7 @@ def prompt_file():
     top.destroy()
     return file_name
 
-def isPNG(file):
+def is_png(file):
     return file.endswith('.png')
 
 def add_ball(space):
@@ -33,19 +50,30 @@ def add_ball(space):
     return shape
 
 class PNGShape():
-    def __init__(self, file):
+    def __init__(self, file, screen):
         self.body = pymunk.Body()
         self.body.position = 50, 50
-        img = pygame.image.load(file).convert_alpha()
+        img = pygame.image.load(file)
         img_mask = pygame.mask.from_surface(img)
-        img_outline = img_mask.outline(5)
+        img_outline = img_mask.outline(1)
+        triangles = convert_to_triangles(img_outline)
+        window_center = screen.get_rect().center
+        rect = img.get_rect(center = window_center)
+
+        triangles_draw = []
+        for triangle in triangles:
+            triangle_tuple = tuple((p[0] + rect.x / 2, p[1] + rect.y / 2) for p in triangle)
+            triangles_draw.append(triangle_tuple)
+        
         self.shape: List [pymunk.Shape] = []
-        for i in range (len(img_outline)):
-            self.shape.append(pymunk.Segment(self.body, img_outline[i], img_outline[(i+1)%len(img_outline)], 3))
-            self.shape[i].elasticity = 0.4
+        for i in range (len(triangles)):
+            # self.shape.append(pymunk.Segment(self.body, img_outline[i], img_outline[(i+1)%len(img_outline)], 3))
+            self.shape.append(pymunk.Poly(self.body, triangles_draw[i]))
+            self.shape[i].elasticity = 0.5
             self.shape[i].density = 1
             self.shape[i].friction = 1
     def add_shape(self, space):
+        # print ("Added a shape with", len(self.shape), "triangles")
         space.add(self.body, *self.shape)
         return self.shape
 
@@ -95,6 +123,9 @@ def main():
         s.friction = 1.0
         s.group = 1
     space.add(*static)
+    tick = 0
+    image_added = False
+    is_pointing_at_shape = False
 
     while running:
         for event in pygame.event.get():
@@ -106,60 +137,38 @@ def main():
                 sys.exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN and button.collidepoint(event.pos):
                 f = prompt_file()
-                if isPNG(f):
-                    pngShape = PNGShape(f)
+                if is_png(f):
+                    image_added = True
+                    pngShape = PNGShape(f, screen)
                     pngShape.add_shape(space)
                     shapes.append(pngShape)
-                    # body = pymunk.Body(mass=1, moment=1000)
-                    # body.position = (100, 200)
-                    # body.apply_impulse_at_local_point((100, 0), (0, 1))
-                    # listshape: List [pymunk.Shape] = []
-                    # shapestest: List [Tuple[int, int]] = [
-                    #     (0, 0), (40, 0), (40, 40), (0, 40), (20, 20)
-                    # ]
-                    # for i in range(len(shapestest)): 
-                    #     listshape.append(pymunk.Segment(body,shapestest[i], shapestest[(i+1)%len(shapestest)], radius=5))
-                    #     listshape[i].elasticity = 1
-                    #     listshape[i].friction = 1
-
-                    # space.add(body, *listshape)
-                    
-                    
-                    
-                    # shape = pymunk.Segment(body, (-50, 0), (50, 0), radius=10)
-                    # shape.elasticity = 0.999
-                    # space.add(body, shape)
-                    # print(listshape[0].body)
-                    # s1 = pymunk.Segment(space.static_body,(60, 60), (80, 80), 5)
-
-                    
-                    # img = pygame.image.load(f).convert_alpha()
-                    # img_mask = pygame.mask.from_surface(img)
-                    # img_outline = img_mask.outline()
-                    # screen_center = screen.get_rect().center
-                    # img_rect = img.get_rect(center = screen_center)
-                    # screen_points = [(p[0] + img_rect.x, p[1] + img_rect.y) for p in img_outline]
+                else:
+                    image_added = False
+            if event.type == pygame.MOUSEBUTTONDOWN and is_pointing_at_shape:
+                print("Clicked on a shape")
+        mouse_pos = pymunk.pygame_util.get_mouse_pos(screen)
+        max_distance = 5
+        info = space.point_query_nearest(mouse_pos, max_distance, pymunk.ShapeFilter())
+        if info is not None and isinstance(info.shape,pymunk.Poly):
+            # print("Pointing over a shape at", mouse_pos)
+            is_pointing_at_shape = True
+        else:
+            is_pointing_at_shape = False
+        # if image_added and tick % FPS == 0:
+        #     pngShape = PNGShape(f, screen)
+        #     pngShape.add_shape(space)
+        #     shapes.append(pngShape)
         space.step(1 / FPS)
+        tick += 1
         # fill background with black color
         screen.fill((0, 0, 0))
-        # if isPNG(f):
-        #     pygame.draw.lines(screen, 'white', True, screen_points, 5)
-        
-
-        # ticks_to_next_ball -= 1
-        # if ticks_to_next_ball <= 0:
-        #     ticks_to_next_ball = 25
-        #     ball_shape = add_ball(space)
-        #     balls.append(ball_shape)
-        
-        
-
         mouseY, mouseX = pygame.mouse.get_pos()
         if button.x <= mouseX <= button.x + button_height and button.y <= mouseY <= button.y + button_width:
             pygame.draw.rect(screen, ('red'), button)
         else:
             pygame.draw.rect(screen, ('white'), button)
         screen.blit(button_text, (button.x + 5, button.y))
+        screen.blit(font.render("fps: " + str(clock.get_fps()), True, pygame.Color("white")), (200, 0))
         
         space.debug_draw(draw_options)
         pygame.display.update()
